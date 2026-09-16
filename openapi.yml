@@ -1,0 +1,69 @@
+openapi: 3.0.3
+info:
+  title: Service Business Lead Follow-up API
+  version: 1.0.0
+  description: Receives, classifies, and stores potential customer leads.
+
+servers:
+  - url: http://127.0.0.1:5060
+
+paths:
+  /health:
+    get:
+      summary: Check whether the API is alive
+      responses:
+        "200":
+          description: API is running
+
+  /lead:
+    post:
+      summary: Submit a potential customer lead
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LeadRequest"
+      responses:
+        "200":
+          description: Lead accepted, rejected as invalid, or identified as duplicate
+        "401":
+          description: API key is missing or incorrect
+        "422":
+          description: AI classification failed
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+  schemas:
+    LeadRequest:
+      type: object
+      required:
+        - lead_id
+        - name
+        - email
+        - service
+        - message
+      properties:
+        lead_id:
+          type: string
+          example: lead-001
+        name:
+          type: string
+          example: Anika
+        email:
+          type: string
+          format: email
+          example: anika@example.com
+        service:
+          type: string
+          example: Website redesign
+        message:
+          type: string
+          example: I need a quote for redesigning my business website.
