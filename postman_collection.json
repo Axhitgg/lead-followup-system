@@ -1,0 +1,89 @@
+{
+  "info": {
+    "name": "Service Business Lead Follow-up API",
+    "_postman_id": "service-business-lead-follow-up-api",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:5060"
+    },
+    {
+      "key": "api_key",
+      "value": "lead-demo-key-2026"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health check",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/health"
+      }
+    },
+    {
+      "name": "Submit valid lead",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"lead_id\": \"postman-lead-001\",\n  \"name\": \"Anika\",\n  \"email\": \"anika@example.com\",\n  \"service\": \"Website redesign\",\n  \"message\": \"I need a quote for redesigning my business website.\"\n}"
+        },
+        "url": "{{base_url}}/lead"
+      }
+    },
+    {
+      "name": "Duplicate lead",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"lead_id\": \"postman-lead-001\",\n  \"name\": \"Anika\",\n  \"email\": \"anika@example.com\",\n  \"service\": \"Website redesign\",\n  \"message\": \"I need a quote for redesigning my business website.\"\n}"
+        },
+        "url": "{{base_url}}/lead"
+      }
+    },
+    {
+      "name": "Wrong API key",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-API-Key",
+            "value": "wrong-key"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"lead_id\": \"postman-auth-001\",\n  \"name\": \"Anika\",\n  \"email\": \"anika@example.com\",\n  \"service\": \"Website redesign\",\n  \"message\": \"Authentication test\"\n}"
+        },
+        "url": "{{base_url}}/lead"
+      }
+    }
+  ]
+}
