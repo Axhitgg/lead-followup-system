@@ -3,3 +3,4 @@ __pycache__/
 *.pyc
 ai-automation-venv/
 lead_audit.jsonl
+.DS_Store
