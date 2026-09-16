@@ -1,0 +1,5 @@
+.env
+__pycache__/
+*.pyc
+ai-automation-venv/
+lead_audit.jsonl
