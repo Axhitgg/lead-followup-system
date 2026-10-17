@@ -1,85 +1,85 @@
-# Service Business Lead Follow-up System
+# Lead Follow-up System
 
-[![Lead API Tests](https://github.com/Axhitgg/lead-followup-system/actions/workflows/tests.yml/badge.svg)](https://github.com/Axhitgg/lead-followup-system/actions/workflows/tests.yml)
+An AI-assisted lead intake prototype for service businesses, using n8n, Python, Flask, OpenAI and PostgreSQL. It organises enquiries and returns a suggested next step for follow-up.
 
-An AI-assisted intake system for small service businesses. It receives potential customer leads, classifies the requested service and urgency, recommends a follow-up action, stores the result, and prevents duplicate processing.
+## Business problem
 
-## Architecture
+Potential customers send requests with different levels of urgency. Reading every message manually can delay a useful response or leave an urgent enquiry unnoticed. This project classifies the enquiry and makes it available as a structured record for a follow-up workflow.
 
-n8n Webhook → Flask API → OpenAI → PostgreSQL → JSON response
+## Example
 
-## Features
+A customer asks for an urgent website repair. The API checks their details and lead ID, classifies service category and urgency, saves the result and returns a next-action suggestion. An n8n workflow can use that result to notify the business through Gmail. A suggestion is not proof that a customer was contacted.
 
-- Validates lead information
-- Normalizes email addresses
-- Requires an API key
-- Prevents duplicate lead IDs
-- Classifies service and urgency with OpenAI
-- Recommends a next action
-- Stores leads in PostgreSQL
-- Provides health and readiness endpoints
-- Runs with Docker Compose
-- Includes automated tests and CI
-- Includes Postman and n8n workflow exports
+```text
+Customer -> n8n webhook -> Flask validation / duplicate check
+         -> OpenAI classification -> Output checks -> PostgreSQL -> JSON
+n8n -> Urgency-based follow-up / Gmail alert
+```
 
-## Required lead fields
+## Features and included files
 
-    {
-      "lead_id": "lead-001",
-      "name": "Anika",
-      "email": "anika@example.com",
-      "service": "Website redesign",
-      "message": "I need a quote for redesigning my business website."
-    }
+- Required lead fields, email normalisation and environment-based API-key checks.
+- AI summary, service category, Low / Medium / High urgency and next action.
+- AI required-field/urgency checks, PostgreSQL storage and local JSONL events.
+- Docker Compose, automated tests and CI.
+- `lead_followup_n8n.json`: workflow export; reconnect triggers, URLs and your own credentials after import.
+- `postman_collection.json` and `openapi.yml`: request examples and API contract.
 
-## Example result
+## Run locally
 
-    {
-      "received": true,
-      "saved": true,
-      "lead": {
-        "lead_id": "lead-001",
-        "service_category": "Website redesign / Web design",
-        "urgency": "Medium",
-        "next_action": "Schedule a discovery call"
-      }
-    }
+Create an untracked `.env` in the cloned repository:
 
-## Run with Docker Compose
+```dotenv
+OPENAI_API_KEY=replace-with-your-own-key
+LEAD_API_KEY=replace-with-a-unique-local-secret
+POSTGRES_PASSWORD=replace-with-a-url-safe-local-password
+```
 
-Create a local `.env` file with:
+Docker Compose starts the API and PostgreSQL. Model calls can incur OpenAI charges.
 
-    OPENAI_API_KEY=your-local-key
-    LEAD_API_KEY=lead-demo-key-2026
-    POSTGRES_PASSWORD=local-password
+```sh
+docker compose up --build -d
+curl http://127.0.0.1:5060/health
+```
 
-Start the system:
+Compose supplies DATABASE_URL and uses `init.sql` to initialise a new database volume. Existing data is not automatically migrated. Stop without deleting data using `docker compose down`.
 
-    docker compose up --build -d
+## API
 
-Check health:
+| Method | Path | Purpose |
+| --- | --- | --- |
+| GET | /health | Process-health response |
+| POST | /lead | Validate, classify and store an enquiry |
 
-    curl http://127.0.0.1:5060/health
+POST requires `X-API-Key` matching LEAD_API_KEY. Use synthetic data:
 
-Stop the system:
+```json
+{
+  "lead_id": "demo-lead-001",
+  "name": "Demo Customer",
+  "email": "demo@example.com",
+  "service": "Website support",
+  "message": "Our website is down and we need help today."
+}
+```
 
-    docker compose down
+Required fields are lead_id, name, email, service and message. Success returns `received`, `saved`, `database_id` and the classified `lead`. Missing fields and duplicate IDs currently return HTTP 200 with `received: false`; inspect the response body before routing. Classification failure returns HTTP 422 with `status: human_review`; it is not a successfully saved lead.
 
-## Test locally
+## Tests
 
-    source ~/ai-automation-venv/bin/activate
-    pytest -q
+```sh
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt pytest
+python -m pytest -q test_lead_api.py
+```
 
-## Included files
+Four tests cover missing API key, missing email, a mocked successful classification/save, and duplicate lead ID. These do not establish AI accuracy or email delivery. [Inspect CI runs](https://github.com/Axhitgg/lead-followup-system/actions). No conversion-rate or response-time improvement has been measured.
 
-- `lead_api.py` — Flask API
-- `init.sql` — PostgreSQL schema
-- `docker-compose.yml` — API and database services
-- `lead_followup_n8n.json` — n8n workflow export
-- `postman_collection.json` — Postman requests
-- `test_lead_api.py` — automated tests
-- `openapi.yml` — API contract
+## Security and limitations
 
-## Security
+The project is a portfolio prototype, not a CRM replacement or guaranteed follow-up service. AI urgency can be wrong; keep human oversight for consequential requests. Basic duplicate checks are not full concurrent idempotency. There is no durable email-delivery ledger. Health checks process availability only; the current lead API does not expose `/ready`. Customer text is sent to OpenAI, and `lead_audit.jsonl` can contain customer details. Keep secrets and logs outside Git and use fictional enquiries for demos. The API development entry point uses debug mode and is not a public production server.
 
-Secrets are stored in environment variables and are excluded from Git.
+## Author
+
+[Akshit Singh](https://www.linkedin.com/in/akshit-singh-outlook/) - AI automation portfolio project.
